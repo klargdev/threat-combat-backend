@@ -16,5 +16,20 @@
   "bugs": {
     "url": "https://github.com/klargdev/threat-combat-backend/issues"
   },
-  "homepage": "https://github.com/klargdev/threat-combat-backend#readme"
+  "homepage": "https://github.com/klargdev/threat-combat-backend#readme",
+  "dependencies": {
+    "aws-sdk": "^2.1692.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "firebase-admin": "^13.2.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.12.1",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemon": "^3.1.9",
+    "swagger-ui-express": "^5.0.1"
+  }
 }
