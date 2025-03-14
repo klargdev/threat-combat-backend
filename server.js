@@ -8,7 +8,12 @@ const authRoutes = require("./routes/authRoutes");
 const eventRoutes = require("./routes/eventRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const projectRoutes = require("./routes/projectRoutes");
+const researchRoutes = require("./routes/researchRoutes"); // Corrected import: ensure it's in the routes folder
 const errorHandler = require("./middleware/errorHandler");
+
+// Import Swagger UI and documentation configuration
+const swaggerUi = require("swagger-ui-express");
+const swaggerDocs = require("./swagger");
 
 dotenv.config();
 
@@ -29,12 +34,26 @@ app.use(morgan("dev"));
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/research", researchRoutes); // Use researchRoutes here
 app.use("/api/projects", projectRoutes);
 
-// Error Handling Middleware
+// Swagger Documentation Route
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+// Swagger JSON spec endpoint
+app.get("/swagger.json", (req, res) => {
+  res.json(swaggerDocs);
+});
+
+// Error Handling Middleware (must be after all routes)
 app.use(errorHandler);
 
-// Global Error Handler for Uncaught Errors
+// Global error handlers
+process.on("uncaughtException", (err) => {
+  console.error(`Uncaught Exception: ${err.message}`);
+  process.exit(1);
+});
+
 process.on("unhandledRejection", (err) => {
   console.error(`Unhandled Rejection: ${err.message}`);
   process.exit(1);
