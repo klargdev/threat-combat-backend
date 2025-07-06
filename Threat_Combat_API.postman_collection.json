@@ -1,0 +1,1053 @@
+{
+	"info": {
+		"_postman_id": "threat-combat-api-collection",
+		"name": "Threat Combat API",
+		"description": "Complete API collection for Threat Combat Backend - A threat intelligence and research platform",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "threat-combat-api"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Register a new user with name, email, and password"
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate a user and return a JWT token"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints for user registration and login"
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						},
+						"description": "Retrieve a list of all users. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/{{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{userId}}"
+							]
+						},
+						"description": "Get user details by user ID. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Jane Doe\",\n  \"email\": \"jane.doe@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users/{{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{userId}}"
+							]
+						},
+						"description": "Update user information by user ID. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/{{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{userId}}"
+							]
+						},
+						"description": "Delete a user by user ID. Authentication required."
+					},
+					"response": []
+				}
+			],
+			"description": "User management endpoints (Note: These routes are defined but may not be mounted in the current server configuration)"
+		},
+		{
+			"name": "Projects",
+			"item": [
+				{
+					"name": "Create Project",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Threat Intelligence Project\",\n  \"description\": \"A comprehensive threat intelligence research project\",\n  \"status\": \"ongoing\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/projects",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"projects"
+							]
+						},
+						"description": "Create a new project. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Projects",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/projects",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"projects"
+							]
+						},
+						"description": "Get a list of all projects. No authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Project by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/projects/{{projectId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"projects",
+								"{{projectId}}"
+							]
+						},
+						"description": "Get project details by project ID. No authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Project",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Threat Intelligence Project\",\n  \"description\": \"Updated project description\",\n  \"status\": \"completed\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/projects/{{projectId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"projects",
+								"{{projectId}}"
+							]
+						},
+						"description": "Update project details by project ID. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Project",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/projects/{{projectId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"projects",
+								"{{projectId}}"
+							]
+						},
+						"description": "Delete a project by project ID. Authentication required."
+					},
+					"response": []
+				}
+			],
+			"description": "Project management endpoints for threat intelligence projects"
+		},
+		{
+			"name": "Events",
+			"item": [
+				{
+					"name": "Create Event",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Threat Intelligence Conference\",\n  \"description\": \"Annual conference on emerging cyber threats\",\n  \"date\": \"2024-12-15T09:00:00.000Z\",\n  \"location\": \"Virtual Conference\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/events",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"events"
+							]
+						},
+						"description": "Create a new event. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/events",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"events"
+							]
+						},
+						"description": "Get a list of all events. No authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Event by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/events/{{eventId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"events",
+								"{{eventId}}"
+							]
+						},
+						"description": "Get event details by event ID. No authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Event",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Updated Threat Intelligence Conference\",\n  \"description\": \"Updated event description\",\n  \"date\": \"2024-12-20T09:00:00.000Z\",\n  \"location\": \"Hybrid Conference - Virtual + NYC\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/events/{{eventId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"events",
+								"{{eventId}}"
+							]
+						},
+						"description": "Update event details by event ID. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Event",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/events/{{eventId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"events",
+								"{{eventId}}"
+							]
+						},
+						"description": "Delete an event by event ID. Authentication required."
+					},
+					"response": []
+				}
+			],
+			"description": "Event management endpoints for threat intelligence events and conferences"
+		},
+		{
+			"name": "Research",
+			"item": [
+				{
+					"name": "Create Research",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Advanced Persistent Threats Analysis\",\n  \"abstract\": \"Comprehensive analysis of APT groups and their techniques\",\n  \"content\": \"Detailed research content on APT analysis...\",\n  \"authors\": [\"{{userId}}\"],\n  \"publishedDate\": \"2024-01-15T00:00:00.000Z\",\n  \"references\": [\"MITRE ATT&CK Framework\", \"CVE-2024-0001\"],\n  \"status\": \"published\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/research",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"research"
+							]
+						},
+						"description": "Create a new research entry. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Research",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/research",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"research"
+							]
+						},
+						"description": "Get a list of all research entries. No authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Research by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/research/{{researchId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"research",
+								"{{researchId}}"
+							]
+						},
+						"description": "Get details of a research entry by its ID. No authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Research",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Updated APT Analysis\",\n  \"abstract\": \"Updated abstract with new findings\",\n  \"content\": \"Updated research content...\",\n  \"authors\": [\"{{userId}}\"],\n  \"publishedDate\": \"2024-01-20T00:00:00.000Z\",\n  \"references\": [\"MITRE ATT&CK Framework\", \"CVE-2024-0001\", \"New Reference\"],\n  \"status\": \"published\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/research/{{researchId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"research",
+								"{{researchId}}"
+							]
+						},
+						"description": "Update details of a research entry by its ID. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Research",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/research/{{researchId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"research",
+								"{{researchId}}"
+							]
+						},
+						"description": "Delete a research entry by its ID. Authentication required."
+					},
+					"response": []
+				}
+			],
+			"description": "Research management endpoints for threat intelligence research papers and analysis"
+		},
+		{
+			"name": "Notifications",
+			"item": [
+				{
+					"name": "Send Notification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user\": \"{{userId}}\",\n  \"message\": \"New threat intelligence alert: APT group activity detected\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"notifications"
+							]
+						},
+						"description": "Create and send a notification to a specific user. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Notifications",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"notifications"
+							]
+						},
+						"description": "Get a list of notifications for the authenticated user. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Notification as Read",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"notifications",
+								"{{notificationId}}",
+								"read"
+							]
+						},
+						"description": "Mark a specific notification as read. Authentication required."
+					},
+					"response": []
+				}
+			],
+			"description": "Notification management endpoints for user notifications and alerts"
+		},
+		{
+			"name": "Clubs",
+			"item": [
+				{
+					"name": "Create Club",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Threat Combat Club - University of Ghana\",\n  \"university\": \"University of Ghana\",\n  \"location\": \"Accra, Ghana\",\n  \"description\": \"Student-led cybersecurity club focused on DFIR\",\n  \"facultyAdvisor\": {\n    \"name\": \"Dr. John Smith\",\n    \"email\": \"john.smith@ug.edu.gh\",\n    \"department\": \"Computer Science\",\n    \"phone\": \"+233 24 123 4567\"\n  },\n  \"researchFocus\": [\"Memory Forensics\", \"Network Forensics\", \"Incident Response\"],\n  \"meetingSchedule\": {\n    \"frequency\": \"weekly\",\n    \"day\": \"Friday\",\n    \"time\": \"14:00\",\n    \"location\": \"Computer Science Lab 101\"\n  },\n  \"contactInfo\": {\n    \"email\": \"threatcombat.ug@gmail.com\",\n    \"phone\": \"+233 24 826 3695\"\n  },\n  \"socialMedia\": {\n    \"linkedin\": \"https://linkedin.com/company/threatcombat-ug\",\n    \"twitter\": \"@ThreatCombatUG\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"clubs"
+							]
+						},
+						"description": "Create a new university chapter for Threat Combat. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Clubs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"clubs"
+							]
+						},
+						"description": "Retrieve a list of all university chapters with optional filtering"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Active Clubs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs/active",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"clubs",
+								"active"
+							]
+						},
+						"description": "Retrieve only active university chapters"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Clubs by Location",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs/location/Accra",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"clubs",
+								"location",
+								"Accra"
+							]
+						},
+						"description": "Retrieve clubs filtered by specific location"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Club by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs/{{clubId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"clubs",
+								"{{clubId}}"
+							]
+						},
+						"description": "Retrieve detailed information about a specific club"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Club",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"description\": \"Updated club description\",\n  \"status\": \"active\",\n  \"meetingSchedule\": {\n    \"frequency\": \"bi-weekly\",\n    \"day\": \"Wednesday\",\n    \"time\": \"15:00\",\n    \"location\": \"Main Library Conference Room\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs/{{clubId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"clubs",
+								"{{clubId}}"
+							]
+						},
+						"description": "Update club information. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Executive Member",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": \"{{userId}}\",\n  \"position\": \"President\",\n  \"term\": \"2024-2025\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs/{{clubId}}/executives",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"clubs",
+								"{{clubId}}",
+								"executives"
+							]
+						},
+						"description": "Add a new executive member to the club. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Achievement",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Best DFIR Research Award 2024\",\n  \"description\": \"Won first place in the annual DFIR research competition\",\n  \"type\": \"award\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs/{{clubId}}/achievements",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"clubs",
+								"{{clubId}}",
+								"achievements"
+							]
+						},
+						"description": "Add a new achievement to the club. Authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Club Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/clubs/{{clubId}}/stats",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"clubs",
+								"{{clubId}}",
+								"stats"
+							]
+						},
+						"description": "Retrieve comprehensive statistics for a specific club"
+					},
+					"response": []
+				}
+			],
+			"description": "Club management endpoints for university chapters"
+		},
+		{
+			"name": "Documentation",
+			"item": [
+				{
+					"name": "Swagger Documentation",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api-docs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api-docs"
+							]
+						},
+						"description": "Access the Swagger UI documentation for the API"
+					},
+					"response": []
+				},
+				{
+					"name": "Swagger JSON",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/swagger.json",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"swagger.json"
+							]
+						},
+						"description": "Get the Swagger JSON specification for the API"
+					},
+					"response": []
+				}
+			],
+			"description": "API documentation endpoints"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000",
+			"type": "string",
+			"description": "Base URL for the Threat Combat API"
+		},
+		{
+			"key": "authToken",
+			"value": "",
+			"type": "string",
+			"description": "JWT authentication token (obtained from login endpoint)"
+		},
+		{
+			"key": "userId",
+			"value": "",
+			"type": "string",
+			"description": "User ID for testing user-specific endpoints"
+		},
+		{
+			"key": "projectId",
+			"value": "",
+			"type": "string",
+			"description": "Project ID for testing project-specific endpoints"
+		},
+		{
+			"key": "eventId",
+			"value": "",
+			"type": "string",
+			"description": "Event ID for testing event-specific endpoints"
+		},
+		{
+			"key": "researchId",
+			"value": "",
+			"type": "string",
+			"description": "Research ID for testing research-specific endpoints"
+		},
+		{
+			"key": "notificationId",
+			"value": "",
+			"type": "string",
+			"description": "Notification ID for testing notification-specific endpoints"
+		},
+		{
+			"key": "clubId",
+			"value": "",
+			"type": "string",
+			"description": "Club ID for testing club-specific endpoints"
+		}
+	]
+} 
