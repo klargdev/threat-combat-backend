@@ -12,7 +12,7 @@ const {
   getClubsByLocation,
   getActiveClubs,
 } = require("../controllers/clubController");
-const authMiddleware = require("../middleware/authMiddleware");
+const { authMiddleware } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 

@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
+const mongoose = require("mongoose");
 const User = require("../models/User");
 const Club = require("../models/Club");
 const { 
@@ -14,133 +15,204 @@ const {
 } = require("../utils/emailService");
 const { logAuthAttempt, logSecurityEvent } = require("../middleware/auditMiddleware");
 const AuditLog = require("../models/AuditLog");
+const crypto = require("crypto");
 
-// Register User
+// Simple audit logging function
+const logAuditEvent = async (eventData) => {
+  try {
+    await AuditLog.logAction({
+      ...eventData,
+      resource: "AUTHENTICATION",
+      riskLevel: "MEDIUM",
+      requiresReview: false,
+    });
+  } catch (error) {
+    console.error("Error logging audit event:", error);
+  }
+};
+
+// Register a new user (simplified for Threat Combat)
 exports.registerUser = async (req, res) => {
-    try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+  try {
+    const {
+      name,
+      email,
+      password,
+      university,
+      department,
+      level,
+      gpa,
+      dfirStatement,
+      phone,
+      location
+    } = req.body;
 
-        const { 
-            name, 
-            email, 
-            password, 
-            role = "member",
-            chapterId,
-            academicInfo,
-            professionalInfo,
-            contactInfo,
-            profile
-        } = req.body;
-
-        // Check if user already exists
-        let user = await User.findOne({ email });
-        if (user) return res.status(400).json({ message: "User already exists" });
-
-        // Validate role assignment
-        if (role === "super_admin") {
-            return res.status(403).json({ 
-                message: "Super admin accounts cannot be created through registration" 
-            });
-        }
-
-        // Validate chapter assignment for non-industry partners
-        if (role !== "industry_partner" && !chapterId) {
-            return res.status(400).json({ 
-                message: "Chapter ID is required for non-industry partner registrations" 
-            });
-        }
-
-        // Verify chapter exists if provided
-        if (chapterId) {
-            const chapter = await Club.findById(chapterId);
-            if (!chapter) {
-                return res.status(400).json({ message: "Invalid chapter ID" });
-            }
-        }
-
-        // Generate email verification token
-        const verificationToken = generateVerificationToken();
-
-        // Create user object
-        const userData = {
-            name,
-            email,
-            password,
-            role,
-            academicInfo,
-            professionalInfo,
-            contactInfo,
-            profile,
-            emailVerificationToken: verificationToken,
-            membershipStatus: "pending" // Require email verification
-        };
-
-        // Only assign chapter if not industry partner
-        if (role !== "industry_partner" && chapterId) {
-            userData.chapter = chapterId;
-        }
-
-        user = new User(userData);
-        await user.save();
-
-        // Populate chapter info for response
-        await user.populate("chapter", "name university location");
-
-        // Send email verification
-        await sendEmailVerification(email, verificationToken, name);
-
-        // Log the registration
-        await AuditLog.logAction({
-            userId: user._id,
-            userRole: user.role,
-            userChapter: user.chapter,
-            action: "REGISTER",
-            resource: "USER",
-            resourceId: user._id,
-            details: {
-                role: user.role,
-                chapter: user.chapter,
-                emailVerified: false
-            },
-            ipAddress: req.ip || req.connection.remoteAddress,
-            userAgent: req.get("User-Agent"),
-            method: req.method,
-            url: req.originalUrl,
-            statusCode: 201,
-            success: true,
-            riskLevel: "LOW",
-            requiresReview: false,
-        });
-
-        res.status(201).json({ 
-            success: true,
-            message: "User registered successfully. Please check your email to verify your account.",
-            data: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                chapter: user.chapter,
-                membershipStatus: user.membershipStatus
-            }
-        });
-    } catch (error) {
-        console.error("Error in registerUser:", error);
-        res.status(500).json({ 
-            success: false,
-            message: "Server error",
-            error: error.message 
-        });
+    // Validate required fields
+    if (!name || !email || !password || !university || !dfirStatement) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, email, password, university, and DFIR statement are required"
+      });
     }
+
+    // Validate DFIR statement length (200 words max)
+    const wordCount = dfirStatement.trim().split(/\s+/).length;
+    if (wordCount > 200) {
+      return res.status(400).json({
+        success: false,
+        message: "DFIR statement must be 200 words or less"
+      });
+    }
+
+    // Validate GPA/CWA requirements
+    if (gpa && (gpa < 2.5)) {
+      return res.status(400).json({
+        success: false,
+        message: "GPA must be 2.5 or higher for eligibility"
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "User with this email already exists"
+      });
+    }
+
+    // Find or create chapter based on university
+    let chapter = await Club.findOne({ 
+      university: { $regex: new RegExp(university, 'i') },
+      status: 'active'
+    });
+
+    if (!chapter) {
+      // Create new chapter if it doesn't exist
+      chapter = new Club({
+        name: `${university} Threat Combat Chapter`,
+        university: university,
+        location: location || 'Ghana',
+        description: `Threat Combat Chapter at ${university}`,
+        status: 'active',
+        facultyAdvisor: {
+          name: 'To be assigned',
+          email: 'advisor@threatcombatgh.com',
+          department: 'Computer Science'
+        }
+      });
+      await chapter.save();
+    }
+
+    // Hash password
+    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Generate email verification token
+    const emailVerificationToken = crypto.randomBytes(32).toString('hex');
+    const emailVerificationExpires = new Date(Date.now() + parseInt(process.env.EMAIL_VERIFICATION_EXPIRES_IN) || 86400000);
+
+    // Create user with member role by default
+    const userData = {
+      name,
+      email,
+      password: hashedPassword,
+      role: 'member', // Default role
+      chapter: chapter._id,
+      academicInfo: {
+        university,
+        department,
+        yearOfStudy: level === 'undergraduate' ? 1 : 1,
+        degree: level,
+        gpa,
+        studentId: null // Will be assigned by chapter admin
+      },
+      contactInfo: {
+        phone,
+        city: location
+      },
+      membershipStatus: 'pending', // Pending executive team approval
+      emailVerificationToken,
+      passwordResetExpires: emailVerificationExpires,
+      emailVerified: false
+    };
+
+    console.log('📝 Creating user with data:', JSON.stringify(userData, null, 2));
+    console.log('🗄️  User model collection name:', User.collection.name);
+    console.log('🗄️  User model database name:', User.db.name);
+    
+    const user = new User(userData);
+
+    try {
+      await user.save();
+      console.log('✅ User saved successfully:', {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        chapter: user.chapter,
+        membershipStatus: user.membershipStatus
+      });
+    } catch (saveError) {
+      console.error('❌ User save error:', saveError);
+      if (saveError.name === 'ValidationError') {
+        return res.status(400).json({
+          success: false,
+          message: "Validation error",
+          errors: Object.values(saveError.errors).map(e => e.message)
+        });
+      }
+      throw saveError;
+    }
+
+    // Send email verification
+    const emailResult = await sendEmailVerification(email, emailVerificationToken, name);
+    
+    if (!emailResult.success) {
+      console.error('Email verification failed:', emailResult.error);
+    }
+
+    // Log the registration
+    await logAuditEvent({
+      userId: user._id,
+      userRole: user.role,
+      action: 'REGISTER',
+      details: {
+        email,
+        university,
+        chapterId: chapter._id,
+        role: 'member'
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Registration successful! Please check your email for verification and await executive team approval.",
+              data: {
+          userId: user._id,
+          name: user.name,
+          email: user.email,
+          university,
+          chapter: chapter.name,
+          membershipStatus: 'pending'
+        }
+    });
+
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({
+      success: false,
+      message: "Registration failed",
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
 };
 
 // Register Industry Partner
 exports.registerIndustryPartner = async (req, res) => {
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-
         const { 
             name, 
             email, 
@@ -150,48 +222,115 @@ exports.registerIndustryPartner = async (req, res) => {
             profile
         } = req.body;
 
-        // Check if user already exists
-        let user = await User.findOne({ email });
-        if (user) return res.status(400).json({ message: "User already exists" });
-
-        // Validate required professional info
-        if (!professionalInfo || !professionalInfo.company) {
-            return res.status(400).json({ 
-                message: "Company information is required for industry partners" 
+        // Validate required fields
+        if (!name || !email || !password || !professionalInfo) {
+            return res.status(400).json({
+                success: false,
+                message: "Name, email, password, and professional information are required"
             });
         }
 
-        const userData = {
+        // Validate company information
+        if (!professionalInfo.company) {
+            return res.status(400).json({
+                success: false,
+                message: "Company information is required for industry partner registration"
+            });
+        }
+
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                message: "User with this email already exists"
+            });
+        }
+
+        // Hash password
+        const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        // Generate email verification token
+        const emailVerificationToken = crypto.randomBytes(32).toString('hex');
+        const emailVerificationExpires = new Date(Date.now() + parseInt(process.env.EMAIL_VERIFICATION_EXPIRES_IN) || 86400000);
+
+        // Create industry partner user (no chapter assignment - global role)
+        const user = new User({
             name,
             email,
-            password,
-            role: "industry_partner",
+            password: hashedPassword,
+            role: 'industry_partner', // Global role, no chapter assignment
             professionalInfo,
             contactInfo,
             profile,
-            membershipStatus: "pending" // Industry partners need approval
-        };
+            emailVerificationToken,
+            passwordResetExpires: emailVerificationExpires,
+            emailVerified: false,
+            membershipStatus: 'pending'
+        });
 
-        user = new User(userData);
-        await user.save();
+        try {
+          await user.save();
+          console.log('✅ Industry Partner saved successfully:', {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            company: professionalInfo.company,
+            membershipStatus: user.membershipStatus
+          });
+        } catch (saveError) {
+          console.error('❌ Industry Partner save error:', saveError);
+          if (saveError.name === 'ValidationError') {
+            return res.status(400).json({
+              success: false,
+              message: "Validation error",
+              errors: Object.values(saveError.errors).map(e => e.message)
+            });
+          }
+          throw saveError;
+        }
+
+        // Send email verification
+        const emailResult = await sendEmailVerification(email, emailVerificationToken, name);
+        
+        if (!emailResult.success) {
+            console.error('Email verification failed:', emailResult.error);
+        }
+
+        // Log the registration
+        await logAuditEvent({
+            userId: user._id,
+            userRole: user.role,
+            action: 'REGISTER',
+            details: {
+                email,
+                company: professionalInfo.company,
+                role: 'industry_partner'
+            },
+            ipAddress: req.ip,
+            userAgent: req.get('User-Agent')
+        });
 
         res.status(201).json({ 
             success: true,
-            message: "Industry partner registration submitted successfully. Pending approval.",
+            message: "Industry partner registration submitted successfully. Please check your email for verification and await approval.",
             data: {
-                id: user._id,
+                userId: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role,
-                membershipStatus: user.membershipStatus
+                company: professionalInfo.company,
+                role: 'industry_partner',
+                membershipStatus: 'pending'
             }
         });
     } catch (error) {
-        console.error("Error in registerIndustryPartner:", error);
+        console.error('Industry partner registration error:', error);
         res.status(500).json({ 
             success: false,
-            message: "Server error",
-            error: error.message 
+            message: "Industry partner registration failed",
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
         });
     }
 };
@@ -508,4 +647,339 @@ exports.verifyEmail = async (req, res) => {
             error: error.message 
         });
     }
+};
+
+// Assign admin role (Super Admin or Chapter Admin)
+exports.assignAdminRole = async (req, res) => {
+  try {
+    const { email, newRole, chapterId } = req.body;
+    const adminUser = req.user; // Current user making the request
+
+    // Validate required fields
+    if (!email || !newRole) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and new role are required"
+      });
+    }
+
+    // Check if current user has admin privileges
+    if (!['super_admin', 'chapter_admin'].includes(adminUser.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only super admins and chapter admins can assign roles"
+      });
+    }
+
+    // Validate role assignment based on admin type
+    let allowedRoles = [];
+    if (adminUser.role === 'super_admin') {
+      allowedRoles = ['chapter_admin', 'super_admin', 'executive'];
+    } else if (adminUser.role === 'chapter_admin') {
+      allowedRoles = ['executive']; // Chapter admins can only assign executive roles
+    }
+
+    if (!allowedRoles.includes(newRole)) {
+      return res.status(400).json({
+        success: false,
+        message: adminUser.role === 'super_admin' 
+          ? "Invalid role. Can only assign chapter_admin, super_admin, or executive"
+          : "Invalid role. Chapter admins can only assign executive roles"
+      });
+    }
+
+    // Find the user to be promoted
+    const userToPromote = await User.findOne({ email });
+    if (!userToPromote) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Validate role assignment restrictions
+    if (newRole === 'super_admin') {
+      // Only industry partners can be promoted to super admin
+      if (userToPromote.role !== 'industry_partner') {
+        return res.status(400).json({
+          success: false,
+          message: "Only industry partners can be promoted to super admin"
+        });
+      }
+    }
+
+    // Validate chapter assignment and permissions
+    let targetChapter = null;
+    
+    if (newRole === 'chapter_admin') {
+      if (!chapterId) {
+        return res.status(400).json({
+          success: false,
+          message: "Chapter ID is required for chapter admin assignment"
+        });
+      }
+
+      targetChapter = await Club.findById(chapterId);
+      if (!targetChapter) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid chapter ID"
+        });
+      }
+
+      // Check if user is already a member of this chapter
+      if (userToPromote.chapter.toString() !== chapterId) {
+        return res.status(400).json({
+          success: false,
+          message: "User must be a member of the chapter to be assigned as chapter admin"
+        });
+      }
+    } else if (newRole === 'executive') {
+      // For executive role, use the target user's chapter
+      targetChapter = await Club.findById(userToPromote.chapter);
+      if (!targetChapter) {
+        return res.status(400).json({
+          success: false,
+          message: "Target user's chapter not found"
+        });
+      }
+
+      // Chapter admins can only assign executive roles within their own chapter
+      if (adminUser.role === 'chapter_admin') {
+        if (adminUser.chapter.toString() !== userToPromote.chapter.toString()) {
+          return res.status(403).json({
+            success: false,
+            message: "You can only assign executive roles within your own chapter"
+          });
+        }
+      }
+    }
+
+    // Prevent self-demotion
+    if (userToPromote._id.toString() === adminUser._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot modify your own role"
+      });
+    }
+
+    // Update user role
+    const oldRole = userToPromote.role;
+    userToPromote.role = newRole;
+    
+    // For admin roles, ensure they're active and email verified
+    if (['chapter_admin', 'executive', 'super_admin'].includes(newRole)) {
+      userToPromote.membershipStatus = 'active';
+      userToPromote.emailVerified = true;
+    }
+
+    await userToPromote.save();
+
+    // Log the role assignment
+    await logAuditEvent({
+      userId: adminUser._id,
+      userRole: adminUser.role,
+      action: 'ROLE_ASSIGNMENT',
+      details: {
+        targetUserId: userToPromote._id,
+        targetEmail: email,
+        oldRole,
+        newRole,
+        chapterId: newRole === 'super_admin' ? null : (targetChapter ? targetChapter._id : userToPromote.chapter),
+        assignedBy: adminUser.email
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    // Send notification email to the promoted user
+    const emailResult = await sendRoleAssignmentNotification(
+      userToPromote.email,
+      userToPromote.name,
+      newRole,
+      targetChapter ? targetChapter.name : null
+    );
+
+    if (!emailResult.success) {
+      console.error('Role assignment notification failed:', emailResult.error);
+    }
+
+    res.json({
+      success: true,
+      message: `Successfully assigned ${newRole} role to ${email}`,
+      data: {
+        userId: userToPromote._id,
+        email: userToPromote.email,
+        name: userToPromote.name,
+        oldRole,
+        newRole,
+        chapter: targetChapter ? targetChapter.name : null,
+        assignedBy: adminUser.role
+      }
+    });
+
+  } catch (error) {
+    console.error('Role assignment error:', error);
+    res.status(500).json({
+      success: false,
+      message: "Role assignment failed",
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+};
+
+// Get available chapters for registration
+exports.getAvailableChapters = async (req, res) => {
+  try {
+    // Check if database is connected
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: "Database not connected. Please try again later.",
+        error: "Database connection required for this operation"
+      });
+    }
+
+    const chapters = await Club.find({ 
+      status: 'active'
+    }).select('name university location description memberCount stats');
+
+    res.json({
+      success: true,
+      data: chapters || []
+    });
+
+  } catch (error) {
+    console.error('Get chapters error:', error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch chapters",
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+};
+
+// Assign executive role (Chapter Admin only - within their chapter)
+exports.assignExecutiveRole = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const adminUser = req.user; // Current user making the request
+
+    // Validate required fields
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required"
+      });
+    }
+
+    // Check if current user is chapter admin
+    if (adminUser.role !== 'chapter_admin') {
+      return res.status(403).json({
+        success: false,
+        message: "Only chapter admins can assign executive roles"
+      });
+    }
+
+    // Find the user to be promoted
+    const userToPromote = await User.findOne({ email });
+    if (!userToPromote) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Check if user is in the same chapter as the admin
+    if (userToPromote.chapter.toString() !== adminUser.chapter.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only assign executive roles to users in your chapter"
+      });
+    }
+
+    // Check if user is already an executive or higher
+    if (['executive', 'chapter_admin', 'super_admin'].includes(userToPromote.role)) {
+      return res.status(400).json({
+        success: false,
+        message: "User already has executive or higher privileges"
+      });
+    }
+
+    // Prevent self-promotion
+    if (userToPromote._id.toString() === adminUser._id.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot promote yourself"
+      });
+    }
+
+    // Get chapter info
+    const chapter = await Club.findById(adminUser.chapter);
+    if (!chapter) {
+      return res.status(400).json({
+        success: false,
+        message: "Chapter not found"
+      });
+    }
+
+    // Update user role
+    const oldRole = userToPromote.role;
+    userToPromote.role = 'executive';
+    userToPromote.membershipStatus = 'active';
+    userToPromote.emailVerified = true;
+
+    await userToPromote.save();
+
+    // Log the role assignment
+    await logAuditEvent({
+      userId: adminUser._id,
+      userRole: adminUser.role,
+      action: 'EXECUTIVE_ASSIGNMENT',
+      details: {
+        targetUserId: userToPromote._id,
+        targetEmail: email,
+        oldRole,
+        newRole: 'executive',
+        chapterId: adminUser.chapterId,
+        assignedBy: adminUser.email
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    // Send notification email to the promoted user
+    const emailResult = await sendRoleAssignmentNotification(
+      userToPromote.email,
+      userToPromote.name,
+      'executive',
+      chapter.name
+    );
+
+    if (!emailResult.success) {
+      console.error('Executive assignment notification failed:', emailResult.error);
+    }
+
+    res.json({
+      success: true,
+      message: `Successfully assigned executive role to ${email}`,
+      data: {
+        userId: userToPromote._id,
+        email: userToPromote.email,
+        name: userToPromote.name,
+        oldRole,
+        newRole: 'executive',
+        chapter: chapter.name,
+        assignedBy: 'chapter_admin'
+      }
+    });
+
+  } catch (error) {
+    console.error('Executive assignment error:', error);
+    res.status(500).json({
+      success: false,
+      message: "Executive assignment failed",
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
 };

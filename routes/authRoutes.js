@@ -8,9 +8,12 @@ const {
     changePassword,
     requestPasswordReset,
     resetPassword,
-    verifyEmail
+    verifyEmail,
+    assignAdminRole,
+    assignExecutiveRole,
+    getAvailableChapters
 } = require("../controllers/authController");
-const authMiddleware = require("../middleware/authMiddleware");
+const { authMiddleware, requireRole } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -324,5 +327,91 @@ router.post("/reset-password", resetPassword);
  *         description: Server error.
  */
 router.get("/verify-email/:token", verifyEmail);
+
+/**
+ * @openapi
+ * /api/auth/assign-admin:
+ *   post:
+ *     summary: Assign admin role to user (Super Admin only)
+ *     description: Assign chapter_admin or super_admin role to existing users.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - newRole
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: Email of the user to promote.
+ *               newRole:
+ *                 type: string
+ *                 enum: [chapter_admin, super_admin]
+ *                 description: New role to assign.
+ *               chapterId:
+ *                 type: string
+ *                 description: Chapter ID (required for chapter_admin role).
+ *     responses:
+ *       200:
+ *         description: Role assigned successfully.
+ *       400:
+ *         description: Invalid request or user not found.
+ *       403:
+ *         description: Insufficient permissions.
+ *       500:
+ *         description: Server error.
+ */
+router.post("/assign-admin", authMiddleware, requireRole(['super_admin', 'chapter_admin']), assignAdminRole);
+
+/**
+ * @openapi
+ * /api/auth/assign-executive:
+ *   post:
+ *     summary: Assign executive role to user (Chapter Admin only)
+ *     description: Assign executive role to users within the same chapter.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: Email of the user to promote to executive.
+ *     responses:
+ *       200:
+ *         description: Executive role assigned successfully.
+ *       400:
+ *         description: Invalid request or user not found.
+ *       403:
+ *         description: Insufficient permissions or user not in same chapter.
+ *       500:
+ *         description: Server error.
+ */
+router.post("/assign-executive", authMiddleware, requireRole(['chapter_admin']), assignExecutiveRole);
+
+/**
+ * @openapi
+ * /api/auth/chapters:
+ *   get:
+ *     summary: Get available chapters for registration
+ *     description: Retrieve list of active Threat Combat chapters for user registration.
+ *     responses:
+ *       200:
+ *         description: List of available chapters.
+ *       500:
+ *         description: Server error.
+ */
+router.get("/chapters", getAvailableChapters);
 
 module.exports = router;

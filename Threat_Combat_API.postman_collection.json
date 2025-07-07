@@ -22,7 +22,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@atu.edu.gh\",\n  \"password\": \"password123\",\n  \"university\": \"Accra Technical University\",\n  \"department\": \"Computer Science\",\n  \"level\": \"undergraduate\",\n  \"gpa\": 3.2,\n  \"dfirStatement\": \"I am passionate about cybersecurity and want to learn Digital Forensics and Incident Response to help protect organizations from cyber threats. I believe in the importance of practical skills and hands-on experience in this field.\",\n  \"phone\": \"+233 24 826 3695\",\n  \"location\": \"Accra, Ghana\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/auth/register",
@@ -35,7 +35,37 @@
 								"register"
 							]
 						},
-						"description": "Register a new user with name, email, and password"
+						"description": "Register a new user with simplified Threat Combat requirements"
+					},
+					"response": []
+				},
+				{
+					"name": "Register Industry Partner",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane.smith@company.com\",\n  \"password\": \"password123\",\n  \"professionalInfo\": {\n    \"company\": \"CyberSec Solutions Ltd\",\n    \"position\": \"Senior Security Analyst\",\n    \"industry\": \"Cybersecurity\",\n    \"experience\": 5,\n    \"expertise\": [\"DFIR\", \"Malware Analysis\", \"Incident Response\"]\n  },\n  \"contactInfo\": {\n    \"phone\": \"+233 24 826 3695\",\n    \"location\": \"Accra, Ghana\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register/industry",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register",
+								"industry"
+							]
+						},
+						"description": "Register a new industry partner (global role, no chapter assignment)"
 					},
 					"response": []
 				},
@@ -64,12 +94,333 @@
 								"login"
 							]
 						},
-						"description": "Authenticate a user and return a JWT token"
+						"description": "Authenticate a user and return a JWT token with role and permissions"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"logout"
+							]
+						},
+						"description": "Clear the authentication token and log out the user"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"profile"
+							]
+						},
+						"description": "Retrieve the profile of the currently authenticated user"
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"currentPassword\": \"password123\",\n  \"newPassword\": \"newpassword456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/change-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"change-password"
+							]
+						},
+						"description": "Change the password of the currently authenticated user"
+					},
+					"response": []
+				},
+				{
+					"name": "Request Password Reset",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/forgot-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"forgot-password"
+							]
+						},
+						"description": "Send a password reset link to the user's email"
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"reset-token-from-email\",\n  \"newPassword\": \"newpassword456\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/reset-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"reset-password"
+							]
+						},
+						"description": "Reset password using a valid reset token"
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Email",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/verify-email/verification-token-here",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"verify-email",
+								"verification-token-here"
+							]
+						},
+						"description": "Verify user's email address using verification token"
+					},
+					"response": []
+				},
+				{
+					"name": "Assign Admin Role (Super Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@atu.edu.gh\",\n  \"newRole\": \"chapter_admin\",\n  \"chapterId\": \"{{chapterId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/assign-admin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"assign-admin"
+							]
+						},
+						"description": "Super Admin: Assign chapter_admin, super_admin, or executive roles"
+					},
+					"response": []
+				},
+				{
+					"name": "Assign Admin Role (Chapter Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"jane.doe@atu.edu.gh\",\n  \"newRole\": \"executive\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/assign-admin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"assign-admin"
+							]
+						},
+						"description": "Chapter Admin: Can only assign executive roles within their chapter"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Available Chapters",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/chapters",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"chapters"
+							]
+						},
+						"description": "Get list of available chapters for registration"
+					},
+					"response": []
+				},
+				{
+					"name": "Assign Executive Role",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"jane.doe@atu.edu.gh\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/assign-executive",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"assign-executive"
+							]
+						},
+						"description": "Assign executive role to user within same chapter (Chapter Admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Promote Industry Partner to Super Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"jane.smith@company.com\",\n  \"newRole\": \"super_admin\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/assign-admin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"assign-admin"
+							]
+						},
+						"description": "Super Admin: Promote industry partner to super admin (only industry partners can become super admin)"
 					},
 					"response": []
 				}
 			],
-			"description": "Authentication endpoints for user registration and login"
+			"description": "Complete authentication endpoints for Threat Combat role hierarchy - Student, Industry Partner, and Super Admin management"
 		},
 		{
 			"name": "Users",
@@ -1033,6 +1384,173 @@
 				}
 			],
 			"description": "Testing endpoints for configuration verification"
+		},
+		{
+			"name": "Role Hierarchy Examples",
+			"item": [
+				{
+					"name": "Student Registration Flow",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@atu.edu.gh\",\n  \"password\": \"password123\",\n  \"university\": \"Accra Technical University\",\n  \"department\": \"Computer Science\",\n  \"level\": \"undergraduate\",\n  \"gpa\": 3.2,\n  \"dfirStatement\": \"I am passionate about cybersecurity and want to learn Digital Forensics and Incident Response to help protect organizations from cyber threats. I believe in the importance of practical skills and hands-on experience in this field.\",\n  \"phone\": \"+233 24 826 3695\",\n  \"location\": \"Accra, Ghana\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Step 1: Register a student (member role)"
+					},
+					"response": []
+				},
+				{
+					"name": "Industry Partner Registration Flow",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane.smith@company.com\",\n  \"password\": \"password123\",\n  \"professionalInfo\": {\n    \"company\": \"CyberSec Solutions Ltd\",\n    \"position\": \"Senior Security Analyst\",\n    \"industry\": \"Cybersecurity\",\n    \"experience\": 5,\n    \"expertise\": [\"DFIR\", \"Malware Analysis\", \"Incident Response\"]\n  },\n  \"contactInfo\": {\n    \"phone\": \"+233 24 826 3695\",\n    \"location\": \"Accra, Ghana\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register/industry",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register",
+								"industry"
+							]
+						},
+						"description": "Step 1: Register an industry partner (industry_partner role)"
+					},
+					"response": []
+				},
+				{
+					"name": "Super Admin Promotes Student to Chapter Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{superAdminToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.doe@atu.edu.gh\",\n  \"newRole\": \"chapter_admin\",\n  \"chapterId\": \"{{chapterId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/assign-admin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"assign-admin"
+							]
+						},
+						"description": "Step 2: Super Admin promotes student to Chapter Admin"
+					},
+					"response": []
+				},
+				{
+					"name": "Chapter Admin Promotes Student to Executive",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{chapterAdminToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"jane.doe@atu.edu.gh\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/assign-executive",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"assign-executive"
+							]
+						},
+						"description": "Step 3: Chapter Admin promotes student to Executive"
+					},
+					"response": []
+				},
+				{
+					"name": "Super Admin Promotes Industry Partner to Super Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{superAdminToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{industryPartnerEmail}}\",\n  \"newRole\": \"super_admin\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/assign-admin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"assign-admin"
+							]
+						},
+						"description": "Step 2: Super Admin promotes industry partner to Super Admin"
+					},
+					"response": []
+				}
+			],
+			"description": "Complete role hierarchy examples showing the promotion flow"
 		}
 	],
 	"event": [
@@ -1103,6 +1621,30 @@
 			"value": "",
 			"type": "string",
 			"description": "Club ID for testing club-specific endpoints"
+		},
+		{
+			"key": "chapterId",
+			"value": "",
+			"type": "string",
+			"description": "Chapter ID for user registration"
+		},
+		{
+			"key": "superAdminToken",
+			"value": "",
+			"type": "string",
+			"description": "JWT token for super admin (Threat Combat HQ)"
+		},
+		{
+			"key": "chapterAdminToken",
+			"value": "",
+			"type": "string",
+			"description": "JWT token for chapter admin"
+		},
+		{
+			"key": "industryPartnerEmail",
+			"value": "jane.smith@company.com",
+			"type": "string",
+			"description": "Email of industry partner for testing"
 		}
 	]
 } 

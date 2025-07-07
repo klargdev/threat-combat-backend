@@ -36,8 +36,21 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to Database
-connectDB();
+// Global variable to track database connection status
+let dbConnected = false;
+
+// Connect to Database (blocking for first connection)
+(async () => {
+  try {
+    await connectDB();
+    dbConnected = true;
+    console.log('✅ Database connection established');
+  } catch (error) {
+    console.log('⚠️  Database connection failed, but server will continue');
+    dbConnected = false;
+   
+  }
+})();
 
 // Security Middleware (order matters!)
 app.use(securityHeaders);
@@ -88,7 +101,8 @@ app.get("/health", (req, res) => {
     status: "OK",
     message: "Threat Combat API is running",
     timestamp: new Date().toISOString(),
-    version: "1.0.0"
+    version: "1.0.0",
+    database: dbConnected ? "connected" : "disconnected"
   });
 });
 

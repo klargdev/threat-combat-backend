@@ -240,9 +240,14 @@ UserSchema.virtual("canManageChapter").get(function() {
   return this.role === "chapter_admin" || this.role === "super_admin";
 });
 
-// Pre-save middleware to hash password
+// Pre-save middleware to hash password (only if not already hashed)
 UserSchema.pre("save", async function(next) {
   if (!this.isModified("password")) return next();
+  
+  // Check if password is already hashed (starts with $2b$)
+  if (this.password.startsWith('$2b$')) {
+    return next();
+  }
   
   try {
     const salt = await bcrypt.genSalt(12);

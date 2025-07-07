@@ -3,7 +3,7 @@ const crypto = require("crypto");
 
 // Create transporter
 const createTransporter = () => {
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: process.env.EMAIL_HOST || "smtp.gmail.com",
     port: process.env.EMAIL_PORT || 587,
     secure: false, // true for 465, false for other ports
@@ -343,6 +343,88 @@ const sendAccountSuspensionEmail = async (email, name, reason) => {
   }
 };
 
+// Send role assignment notification
+const sendRoleAssignmentNotification = async (email, name, newRole, chapterName) => {
+  try {
+    const roleTitle = newRole === 'super_admin' ? 'Super Administrator' : 'Chapter Administrator';
+    const subject = `Role Assignment - ${roleTitle}`;
+    
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="margin: 0; font-size: 28px;">🎯 Threat Combat</h1>
+          <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Role Assignment Notification</p>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+          <h2 style="color: #333; margin-bottom: 20px;">Congratulations, ${name}! 🎉</h2>
+          
+          <div style="background: white; padding: 25px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #667eea;">
+            <h3 style="color: #667eea; margin-top: 0;">Your Role Has Been Updated</h3>
+            <p style="color: #666; line-height: 1.6;">
+              You have been assigned the role of <strong>${roleTitle}</strong> in the Threat Combat platform.
+              ${chapterName ? `You will be managing the <strong>${chapterName}</strong> chapter.` : ''}
+            </p>
+          </div>
+          
+          <div style="background: #e8f4fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h4 style="color: #2c5aa0; margin-top: 0;">🔑 New Responsibilities:</h4>
+            <ul style="color: #555; line-height: 1.6;">
+              ${newRole === 'super_admin' ? `
+                <li>Manage all Threat Combat chapters and users</li>
+                <li>Assign chapter administrators</li>
+                <li>Oversee platform-wide activities and policies</li>
+                <li>Access to all system features and analytics</li>
+              ` : `
+                <li>Manage ${chapterName} chapter members and activities</li>
+                <li>Approve new member applications</li>
+                <li>Organize chapter events and training sessions</li>
+                <li>Coordinate with Threat Combat HQ</li>
+              `}
+            </ul>
+          </div>
+          
+          <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h4 style="color: #856404; margin-top: 0;">⚠️ Important Next Steps:</h4>
+            <ol style="color: #856404; line-height: 1.6;">
+              <li>Log in to your Threat Combat account</li>
+              <li>Review your new permissions and features</li>
+              <li>Complete the administrator orientation (if applicable)</li>
+              <li>Contact Threat Combat HQ if you have any questions</li>
+            </ol>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${process.env.FRONTEND_URL}/dashboard" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold;">
+              Access Dashboard
+            </a>
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666;">
+            <p style="margin: 0; font-size: 14px;">
+              If you have any questions, please contact us at 
+              <a href="mailto:info@threatcombatgh.com" style="color: #667eea;">info@threatcombatgh.com</a>
+            </p>
+            <p style="margin: 5px 0 0 0; font-size: 12px;">
+              Threat Combat - Your Cybersecurity Partner for Incident Response and Digital Forensics
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const result = await sendEmail(email, subject, htmlContent);
+    return result;
+
+  } catch (error) {
+    console.error('Role assignment notification error:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
 module.exports = {
   generateVerificationToken,
   generatePasswordResetToken,
@@ -351,4 +433,5 @@ module.exports = {
   sendWelcomeEmail,
   sendAccountActivationEmail,
   sendAccountSuspensionEmail,
+  sendRoleAssignmentNotification
 };
