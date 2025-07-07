@@ -28,7 +28,9 @@ const generatePasswordResetToken = () => {
 const sendEmailVerification = async (email, token, name) => {
   try {
     const transporter = createTransporter();
-    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${token}`;
+    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+    // Use a logo image URL (adjust path if needed)
+    const logoUrl = `${process.env.FRONTEND_URL}/assets/logo.png`;
 
     const mailOptions = {
       from: `"Threat Combat" <${process.env.EMAIL_USER}>`,
@@ -37,6 +39,7 @@ const sendEmailVerification = async (email, token, name) => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; color: white;">
+            <img src="${logoUrl}" alt="Threat Combat Logo" style="height: 60px; margin-bottom: 10px;" />
             <h1 style="margin: 0;">Threat Combat</h1>
             <p style="margin: 10px 0 0 0;">Cybersecurity Education & Research Platform</p>
           </div>

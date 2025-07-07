@@ -11,7 +11,8 @@ const {
     verifyEmail,
     assignAdminRole,
     assignExecutiveRole,
-    getAvailableChapters
+    getAvailableChapters,
+    verifyEmailByToken
 } = require("../controllers/authController");
 const { authMiddleware, requireRole } = require("../middleware/authMiddleware");
 
@@ -413,5 +414,33 @@ router.post("/assign-executive", authMiddleware, requireRole(['chapter_admin']),
  *         description: Server error.
  */
 router.get("/chapters", getAvailableChapters);
+
+/**
+ * @openapi
+ * /api/auth/verify-email:
+ *   post:
+ *     summary: Verify email address by token
+ *     description: Verify user's email address using token verification.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: The user's token.
+ *     responses:
+ *       200:
+ *         description: Email verified successfully.
+ *       404:
+ *         description: User not found.
+ *       500:
+ *         description: Server error.
+ */
+router.post('/verify-email', verifyEmailByToken);
 
 module.exports = router;

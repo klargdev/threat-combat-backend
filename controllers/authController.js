@@ -983,3 +983,61 @@ exports.assignExecutiveRole = async (req, res) => {
     });
   }
 };
+
+// Securely verify email by verification token (not email)
+exports.verifyEmailByToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid verification token is required.'
+      });
+    }
+
+    // Sanitize token input
+    const sanitizedToken = token.trim();
+
+    // Find user by verification token
+    const user = await User.findOne({ emailVerificationToken: sanitizedToken });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Invalid or expired verification token.'
+      });
+    }
+
+    if (user.emailVerified) {
+      return res.status(200).json({
+        success: true,
+        message: 'Email is already verified.'
+      });
+    }
+
+    user.emailVerified = true;
+    user.emailVerificationToken = undefined;
+    await user.save();
+
+    // Log the verification event
+    await logAuditEvent({
+      userId: user._id,
+      userRole: user.role,
+      action: 'EMAIL_VERIFIED',
+      details: { email: user.email },
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully.'
+    });
+  } catch (error) {
+    console.error('Error in verifyEmailByToken:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};

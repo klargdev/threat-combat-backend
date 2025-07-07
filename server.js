@@ -51,6 +51,11 @@ let dbConnected = false;
    
   }
 })();
+// Allow requests from your frontend origin
+// app.use(cors({
+//   origin: process.env.FRONTEND_URL,
+//   credentials: true, // if you use cookies or authentication headers
+// }));
 
 // Security Middleware (order matters!)
 app.use(securityHeaders);
@@ -63,7 +68,6 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Rate limiting
-app.use("/api/auth", authLimiter);
 app.use("/api/auth/forgot-password", passwordResetLimiter);
 app.use("/api/auth/register", registrationLimiter);
 app.use("/api", speedLimiter);

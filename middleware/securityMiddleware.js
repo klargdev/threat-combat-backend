@@ -49,7 +49,7 @@ const passwordResetLimiter = rateLimit({
 // Rate limiting for registration
 const registrationLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // limit each IP to 10 registration attempts per hour
+  max: 100, //imit each IP to 100 egistration attempts per hour
   message: {
     success: false,
     message: "Too many registration attempts, please try again later.",
@@ -92,13 +92,7 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     
     const allowedOrigins = [
-      "http://localhost:3000",
-      "http://localhost:5173",
-      "http://localhost:4173",
-      "https://threatcombat.com",
-      "https://www.threatcombat.com",
-      "https://threat-combat-frontend.vercel.app",
-      "https://threat-combat-backend.vercel.app"
+      "http://localhost:3039",
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {
