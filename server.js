@@ -70,8 +70,8 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 // Rate limiting
 app.use("/api/auth/forgot-password", passwordResetLimiter);
 app.use("/api/auth/register", registrationLimiter);
-app.use("/api", speedLimiter);
-app.use("/api", apiLimiter);
+// app.use("/api", speedLimiter);
+// app.use("/api", apiLimiter);
 
 // Routes
 app.use("/api/auth", authRoutes);

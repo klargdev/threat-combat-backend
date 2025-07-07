@@ -15,24 +15,9 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Rate limiting for general API endpoints
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: {
-    success: false,
-    message: "Too many requests, please try again later.",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Slow down repeated requests
-const speedLimiter = slowDown({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  delayAfter: 50, // allow 50 requests per 15 minutes, then...
-  delayMs: () => 500, // begin adding 500ms of delay per request above 50
-});
+// Comment out apiLimiter and speedLimiter for development
+// apiLimiter,
+// speedLimiter,
 
 // Rate limiting for password reset
 const passwordResetLimiter = rateLimit({
@@ -189,8 +174,8 @@ const notFound = (req, res) => {
 
 module.exports = {
   authLimiter,
-  apiLimiter,
-  speedLimiter,
+  // apiLimiter,
+  // speedLimiter,
   passwordResetLimiter,
   registrationLimiter,
   securityHeaders,
