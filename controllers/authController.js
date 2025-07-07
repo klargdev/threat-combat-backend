@@ -3,6 +3,17 @@ const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const User = require("../models/User");
 const Club = require("../models/Club");
+const { 
+  sendEmailVerification, 
+  sendPasswordResetEmail, 
+  sendWelcomeEmail,
+  sendAccountActivationEmail,
+  sendAccountSuspensionEmail,
+  generateVerificationToken,
+  generatePasswordResetToken
+} = require("../utils/emailService");
+const { logAuthAttempt, logSecurityEvent } = require("../middleware/auditMiddleware");
+const AuditLog = require("../models/AuditLog");
 
 // Register User
 exports.registerUser = async (req, res) => {
@@ -48,6 +59,9 @@ exports.registerUser = async (req, res) => {
             }
         }
 
+        // Generate email verification token
+        const verificationToken = generateVerificationToken();
+
         // Create user object
         const userData = {
             name,
@@ -57,7 +71,9 @@ exports.registerUser = async (req, res) => {
             academicInfo,
             professionalInfo,
             contactInfo,
-            profile
+            profile,
+            emailVerificationToken: verificationToken,
+            membershipStatus: "pending" // Require email verification
         };
 
         // Only assign chapter if not industry partner
@@ -71,9 +87,35 @@ exports.registerUser = async (req, res) => {
         // Populate chapter info for response
         await user.populate("chapter", "name university location");
 
+        // Send email verification
+        await sendEmailVerification(email, verificationToken, name);
+
+        // Log the registration
+        await AuditLog.logAction({
+            userId: user._id,
+            userRole: user.role,
+            userChapter: user.chapter,
+            action: "REGISTER",
+            resource: "USER",
+            resourceId: user._id,
+            details: {
+                role: user.role,
+                chapter: user.chapter,
+                emailVerified: false
+            },
+            ipAddress: req.ip || req.connection.remoteAddress,
+            userAgent: req.get("User-Agent"),
+            method: req.method,
+            url: req.originalUrl,
+            statusCode: 201,
+            success: true,
+            riskLevel: "LOW",
+            requiresReview: false,
+        });
+
         res.status(201).json({ 
             success: true,
-            message: "User registered successfully",
+            message: "User registered successfully. Please check your email to verify your account.",
             data: {
                 id: user._id,
                 name: user.name,
@@ -163,15 +205,61 @@ exports.authLogin = async (req, res) => {
         const { email, password } = req.body;
 
         const user = await User.findOne({ email }).populate("chapter", "name university location");
-        if (!user) return res.status(400).json({ message: "Invalid credentials" });
+        if (!user) {
+            // Log failed login attempt
+            await logAuthAttempt(req, false, "User not found");
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
 
         const isMatch = await user.comparePassword(password);
-        if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+        if (!isMatch) {
+            // Log failed login attempt
+            await logAuthAttempt(req, false, "Invalid password");
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+
+        // Check if email is verified
+        if (!user.emailVerified && user.role !== "super_admin") {
+            await logAuthAttempt(req, false, "Email not verified");
+            return res.status(403).json({ 
+                message: "Please verify your email address before logging in. Check your inbox for the verification link." 
+            });
+        }
 
         // Check if user is active
         if (user.membershipStatus !== "active" && user.role !== "super_admin") {
+            await logAuthAttempt(req, false, "Account not active");
             return res.status(403).json({ 
                 message: "Account is not active. Please contact your chapter admin or wait for approval." 
+            });
+        }
+
+        // Check for account lockout
+        const failedAttempts = await AuditLog.getFailedLoginAttempts(req.ip || req.connection.remoteAddress, 1);
+        if (failedAttempts >= 5) {
+            await logSecurityEvent({
+                userId: user._id,
+                userRole: user.role,
+                userChapter: user.chapter,
+                action: "ACCOUNT_LOCKOUT",
+                details: {
+                    reason: "Too many failed login attempts",
+                    ipAddress: req.ip || req.connection.remoteAddress,
+                    failedAttempts
+                },
+                ipAddress: req.ip || req.connection.remoteAddress,
+                userAgent: req.get("User-Agent"),
+                method: req.method,
+                url: req.originalUrl,
+                statusCode: 429,
+                success: false,
+                errorMessage: "Account temporarily locked due to too many failed attempts",
+                riskLevel: "HIGH",
+                requiresReview: true,
+            });
+            
+            return res.status(429).json({ 
+                message: "Too many failed login attempts. Please try again later." 
             });
         }
 
@@ -195,6 +283,9 @@ exports.authLogin = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
 
+        // Log successful login
+        await logAuthAttempt(req, true);
+
         res.json({ 
             success: true,
             message: "Login successful", 
@@ -211,6 +302,7 @@ exports.authLogin = async (req, res) => {
         });
     } catch (error) {
         console.error("Error in authLogin:", error);
+        await logAuthAttempt(req, false, error.message);
         res.status(500).json({ 
             success: false,
             message: "Server error",

@@ -978,6 +978,61 @@
 				}
 			],
 			"description": "API documentation endpoints"
+		},
+		{
+			"name": "Testing",
+			"item": [
+				{
+					"name": "Test Email Configuration",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"your-test-email@gmail.com\",\n  \"name\": \"Test User\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/test/email",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"test",
+								"email"
+							]
+						},
+						"description": "Test email configuration by sending a verification email"
+					},
+					"response": []
+				},
+				{
+					"name": "Test Environment Variables",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/config",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"test",
+								"config"
+							]
+						},
+						"description": "Check if environment variables are properly configured"
+					},
+					"response": []
+				}
+			],
+			"description": "Testing endpoints for configuration verification"
 		}
 	],
 	"event": [
