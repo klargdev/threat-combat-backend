@@ -1,5 +1,7 @@
 const User = require("../models/User");
 const Club = require("../models/Club");
+const { Parser } = require('json2csv');
+const AuditLog = require("../models/AuditLog");
 
 // @desc    Get all users (with role-based filtering)
 // @route   GET /api/users
@@ -519,6 +521,49 @@ const getUserStats = async (req, res) => {
   }
 };
 
+// @desc    Superadmin reset user password
+// @route   POST /api/users/:id/reset-password
+// @access  Private (Super Admin)
+const superadminResetPassword = async (req, res) => {
+  try {
+    if (req.user.role !== "super_admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only superadmin can reset user passwords."
+      });
+    }
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "A new password of at least 6 characters is required."
+      });
+    }
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found."
+      });
+    }
+    const bcrypt = require('bcryptjs');
+    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
+    user.password = await bcrypt.hash(newPassword, saltRounds);
+    await user.save();
+    res.status(200).json({
+      success: true,
+      message: "Password reset successfully."
+    });
+  } catch (error) {
+    console.error("Superadmin reset password error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error resetting password.",
+      error: error.message
+    });
+  }
+};
+
 // @desc    Get current user profile
 // @route   GET /api/users/profile/me
 // @access  Private
@@ -602,6 +647,87 @@ const updateMyProfile = async (req, res) => {
   }
 };
 
+// @desc    Export users as CSV (superadmin only)
+// @route   GET /api/users/export
+// @access  Private (Super Admin)
+const exportUsersCSV = async (req, res) => {
+  try {
+    if (req.user.role !== "super_admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only superadmin can export users."
+      });
+    }
+    const { role, chapter, status, university, search } = req.query;
+    let query = {};
+    if (role) query.role = role;
+    if (chapter) query.chapter = chapter;
+    if (status) query.membershipStatus = status;
+    if (university) query["academicInfo.university"] = new RegExp(university, "i");
+    if (search) {
+      query.$or = [
+        { name: new RegExp(search, "i") },
+        { email: new RegExp(search, "i") },
+        { "academicInfo.university": new RegExp(search, "i") }
+      ];
+    }
+    const users = await User.find(query)
+      .populate("chapter", "name university location")
+      .select("-password");
+    const fields = [
+      { label: 'Name', value: 'name' },
+      { label: 'Email', value: 'email' },
+      { label: 'Role', value: 'role' },
+      { label: 'Status', value: 'membershipStatus' },
+      { label: 'University', value: 'academicInfo.university' },
+      { label: 'Chapter', value: 'chapter.name' },
+      { label: 'Created At', value: 'createdAt' }
+    ];
+    const parser = new Parser({ fields });
+    const csv = parser.parse(users.map(u => u.toObject()));
+    res.header('Content-Type', 'text/csv');
+    res.attachment('users.csv');
+    return res.send(csv);
+  } catch (error) {
+    console.error("Export users CSV error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error exporting users.",
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get audit logs for a user (superadmin only)
+// @route   GET /api/users/:id/audit
+// @access  Private (Super Admin)
+const getUserAuditLogs = async (req, res) => {
+  try {
+    if (req.user.role !== "super_admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only superadmin can view user audit logs."
+      });
+    }
+    const userId = req.params.id;
+    const logs = await AuditLog.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(1000);
+    res.status(200).json({
+      success: true,
+      count: logs.length,
+      data: logs
+    });
+  } catch (error) {
+    console.error("Get user audit logs error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching user audit logs.",
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getUsers,
   getUserById,
@@ -615,4 +741,8 @@ module.exports = {
   getUserStats,
   getMyProfile,
   updateMyProfile,
+  superadminResetPassword,
 };
+
+module.exports.exportUsersCSV = exportUsersCSV;
+module.exports.getUserAuditLogs = getUserAuditLogs;

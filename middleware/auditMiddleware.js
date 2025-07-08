@@ -148,11 +148,9 @@ const logAuthAttempt = async (req, success, errorMessage = null) => {
   try {
     const action = success ? "LOGIN" : "LOGIN_ATTEMPT_FAILED";
     const riskLevel = success ? "LOW" : "MEDIUM";
-    
-    await AuditLog.logAction({
-      userId: req.user?.id || null,
-      userRole: req.user?.role || "anonymous",
-      userChapter: req.user?.chapter || null,
+
+    // Build log data, only include userId/userRole if present
+    const logData = {
       action,
       resource: "AUTHENTICATION",
       details: {
@@ -169,7 +167,12 @@ const logAuthAttempt = async (req, success, errorMessage = null) => {
       errorMessage,
       riskLevel,
       requiresReview: !success,
-    });
+    };
+    if (req.user?.id) logData.userId = req.user.id;
+    if (req.user?.role) logData.userRole = req.user.role;
+    if (req.user?.chapter) logData.userChapter = req.user.chapter;
+
+    await AuditLog.logAction(logData);
   } catch (error) {
     console.error("Error logging auth attempt:", error);
   }

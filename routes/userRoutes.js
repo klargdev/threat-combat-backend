@@ -11,7 +11,10 @@ const {
   suspendMembership,
   getUserStats,
   getMyProfile,
-  updateMyProfile
+  updateMyProfile,
+  superadminResetPassword,
+  exportUsersCSV,
+  getUserAuditLogs
 } = require("../controllers/userController");
 const { authMiddleware } = require("../middleware/authMiddleware");
 const { 
@@ -387,6 +390,93 @@ router.post("/:id/activate", authMiddleware, requireChapterAdmin, activateMember
  *         description: Server error.
  */
 router.post("/:id/suspend", authMiddleware, requireChapterAdmin, suspendMembership);
+
+/**
+ * @openapi
+ * /api/users/{id}/reset-password:
+ *   post:
+ *     summary: Reset user password (Superadmin only)
+ *     description: Reset the password for a user by their ID. Only superadmins can perform this action.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the user to reset password for.
+ *     responses:
+ *       200:
+ *         description: Password reset successfully.
+ *       403:
+ *         description: Not authorized to reset this user's password.
+ *       404:
+ *         description: User not found.
+ *       500:
+ *         description: Server error.
+ */
+router.post("/:id/reset-password", authMiddleware, (req, res, next) => {
+  if (req.user.role !== "super_admin") {
+    return res.status(403).json({ success: false, message: "Only superadmin can reset user passwords." });
+  }
+  next();
+}, superadminResetPassword);
+
+/**
+ * @openapi
+ * /api/users/export:
+ *   get:
+ *     summary: Export all users as CSV
+ *     description: Export all users to a CSV file. Only superadmins can perform this action.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: CSV file downloaded successfully.
+ *       403:
+ *         description: Not authorized to export users.
+ *       500:
+ *         description: Server error.
+ */
+router.get("/export", authMiddleware, (req, res, next) => {
+  if (req.user.role !== "super_admin") {
+    return res.status(403).json({ success: false, message: "Only superadmin can export users." });
+  }
+  next();
+}, exportUsersCSV);
+
+/**
+ * @openapi
+ * /api/users/{id}/audit:
+ *   get:
+ *     summary: Get user audit logs
+ *     description: Retrieve audit logs for a specific user. Only superadmins can view this.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the user to get audit logs for.
+ *     responses:
+ *       200:
+ *         description: Audit logs retrieved successfully.
+ *       403:
+ *         description: Not authorized to view this user's audit logs.
+ *       404:
+ *         description: User not found.
+ *       500:
+ *         description: Server error.
+ */
+router.get("/:id/audit", authMiddleware, (req, res, next) => {
+  if (req.user.role !== "super_admin") {
+    return res.status(403).json({ success: false, message: "Only superadmin can view user audit logs." });
+  }
+  next();
+}, getUserAuditLogs);
 
 /**
  * @openapi
