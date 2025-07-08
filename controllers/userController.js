@@ -524,16 +524,36 @@ const getUserStats = async (req, res) => {
 // @access  Private
 const getMyProfile = async (req, res) => {
   try {
+    console.log('👤 GetMyProfile - User ID:', req.user?.id);
+    console.log('👤 GetMyProfile - User object:', req.user);
+    
+    if (!req.user || !req.user.id) {
+      console.error('👤 GetMyProfile - No user or user ID found');
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated"
+      });
+    }
+
     const user = await User.findById(req.user.id)
       .populate("chapter", "name university location")
       .select("-password");
 
+    if (!user) {
+      console.error('👤 GetMyProfile - User not found in database');
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    console.log('👤 GetMyProfile - User found:', user._id);
     res.status(200).json({
       success: true,
       data: user,
     });
   } catch (error) {
-    console.error("Get profile error:", error);
+    console.error("👤 GetMyProfile - Error:", error);
     res.status(500).json({
       success: false,
       message: "Error fetching profile",

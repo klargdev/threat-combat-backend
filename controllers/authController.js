@@ -137,9 +137,8 @@ exports.registerUser = async (req, res) => {
       emailVerified: false
     };
 
-    console.log('📝 Creating user with data:', JSON.stringify(userData, null, 2));
+    console.log('📝 Creating user with email:', userData.email);
     console.log('🗄️  User model collection name:', User.collection.name);
-    console.log('🗄️  User model database name:', User.db.name);
     
     const user = new User(userData);
 
@@ -150,7 +149,6 @@ exports.registerUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        chapter: user.chapter,
         membershipStatus: user.membershipStatus
       });
     } catch (saveError) {
@@ -277,7 +275,6 @@ exports.registerIndustryPartner = async (req, res) => {
             name: user.name,
             email: user.email,
             role: user.role,
-            company: professionalInfo.company,
             membershipStatus: user.membershipStatus
           });
         } catch (saveError) {
@@ -418,9 +415,13 @@ exports.authLogin = async (req, res) => {
         res.cookie("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production", 
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+            sameSite: "lax", // Changed from "strict" to "lax" for development
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            path: "/", // Ensure cookie is available for all paths
+            domain: process.env.NODE_ENV === "production" ? process.env.COOKIE_DOMAIN : undefined // Only set domain in production
         });
+
+        console.log('🍪 Setting cookie with token length:', token.length);
 
         // Log successful login
         await logAuthAttempt(req, true);
